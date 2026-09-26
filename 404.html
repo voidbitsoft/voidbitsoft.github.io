@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#050506">
+    <title>404 | VoidBit Software</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <style>
+    /* minimal CSS for the hidden game */
+    #dino-container {
+        width: 100%;
+        height: 150px;
+        position: relative;
+        background: #f5f5f5;
+        overflow: hidden;
+    }
+    .dino {
+        position: absolute;
+        bottom: 0;
+        left: 50px;
+        width: 40px;
+        height: 40px;
+        background: #333;
+        border-radius: 5px;
+    }
+    .ground {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #333;
+    }
+    /* Cup style for hidden mini‑game */
+    .cup {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        background: #ddd;
+        border: 5px solid #555;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 48px;
+        color: #555;
+        text-align: center;
+        line-height: 100px;
+    }
+    @keyframes slide {
+        0%{transform:translateX(0);}
+        50%{transform:translateX(calc(100% - 120px));}
+        100%{transform:translateX(0);}
+    }
+    </style>
+</head>
+<body>
+    <div class="top-menu"><div class="top-menu-container" onclick="location.assign('index.html')"><img src="voidbit_logo.png" class="top-menu-logo" alt="VoidBit"></div><div class="top-menu-container" onclick="location.assign('index.html')"><span class="top-menu-item">Home</span></div><div class="top-menu-container" onclick="location.assign('projects.html')"><span class="top-menu-item">Projects</span></div><div class="top-menu-container" onclick="location.assign('about.html')"><span class="top-menu-item">About Us</span></div><div class="top-menu-container" onclick="location.assign('wads.html')"><span class="top-menu-item">WADs</span></div></div>
+    <main class="page">
+
+<section class="hero" style="min-height:70vh">
+    <div class="eyebrow">ERROR 404</div>
+    <h1>Page <span>not found</span></h1>
+    <p class="hero-subtitle">The page you're looking for doesn't exist here.</p>
+</section>
+
+<!-- hidden cheetah race game emulated from Chrome Dinosaur -->
+<section id="dino-container">
+    <div class="dino" id="dino"></div>
+    <div class="ground"></div>
+</section>
+
+        <footer class="footer">VoidBit Software · Indie game development &amp; experimentation</footer>
+    </main>
+    <script src="https://cdn.jsdelivr.net/gh/googlechrome/engine/engine.js"></script>
+    <script>
+    // Very lightweight implementation of the Chrome dino
+    document.addEventListener('DOMContentLoaded', () => {
+        const dino = document.getElementById('dino');
+        let isJumping = false;
+        const jump = () => {
+            if (!isJumping) {
+                isJumping = true;
+                dino.style.transition = 'bottom 0.4s';
+                dino.style.bottom = '60px';
+                setTimeout(() => {
+                    dino.style.bottom = '0px';
+                    setTimeout(() => { isJumping = false; }, 400);
+                }, 400);
+            }
+        };
+        // Jump controls
+        const keyNames = ['ArrowUp', 'Space'];
+        keyNames.forEach(k => {
+            window.addEventListener('keydown', e => {
+                if (e.key === k) jump();
+            });
+        });
+
+        // Game overlay creation
+        const overlay = document.createElement('div');
+        overlay.id = 'game-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.background = 'rgba(0,0,0,0.85)';
+        overlay.style.display = 'none';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '2000';
+        document.body.appendChild(overlay);
+
+        let gameStarted = false;
+        let zeroIndex = null;
+
+        function showMessage(text) {
+            overlay.innerHTML = `<div style="background:#222;color:#fff;padding:20px;border-radius:5px;text-align:center;display:block;">${text}</div>`;
+            overlay.style.display = 'flex';
+        }
+
+        function startGame() {
+            overlay.innerHTML = '';
+            overlay.style.display = 'flex';
+            zeroIndex = Math.floor(Math.random() * 3);
+            const numbers = ['4', '4', '4'];
+            numbers[zeroIndex] = '0';
+            for (let i = 0; i < 3; i++) {
+                const cup = document.createElement('div');
+                cup.className = 'cup';
+                cup.style.top = `${30 + i * 35}px`;
+                cup.style.left = '0px';
+                cup.dataset.index = i;
+                cup.dataset.number = numbers[i];
+                cup.addEventListener('click', () => {
+                    cup.style.animation = '';
+                    cup.textContent = cup.dataset.number;
+                    showMessage(`You selected cup ${i + 1}. ${cup.dataset.number === '0' ? 'Correct! 🎉' : `Wrong. The correct cup was ${zeroIndex + 1}.`}`);
+                    setTimeout(() => { overlay.style.display = 'none'; gameStarted = false; }, 3000);
+                });
+                const duration = 0.3 + Math.random() * 0.2;
+                cup.style.animation = `slide ${duration}s ease-in-out infinite`;
+                overlay.appendChild(cup);
+            }
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.key === '0' && !gameStarted) {
+                gameStarted = true;
+                showMessage('Game will start in 3 seconds...');
+                setTimeout(startGame, 3000);
+            }
+        });
+    });
+    </script>
+</body>
+</html>
