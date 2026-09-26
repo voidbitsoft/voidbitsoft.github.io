@@ -9,25 +9,21 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <nav class="top-menu">
-        <a class="top-menu-container" href="/"><img src="voidbit_logo.png" class="top-menu-logo" alt="VoidBit"></a>
-        <a class="top-menu-container" href="/"><span class="top-menu-item">Home</span></a>
-        <a class="top-menu-container selected" href="/projects"><span class="top-menu-item">Projects</span></a>
-        <a class="top-menu-container" href="/about"><span class="top-menu-item">About Us</span></a>
-        <a class="top-menu-container" href="/other"><span class="top-menu-item">Other projects</span></a>
-    </nav>
+    <div class="top-menu"><div class="top-menu-container" onclick="location.assign('index.html')"><img src="voidbit_logo.png" class="top-menu-logo" alt="VoidBit"></div><div class="top-menu-container" onclick="location.assign('index.html')"><span class="top-menu-item">Home</span></div>
+    <div class="top-menu-container selected" onclick="location.assign('projects')"><span class="top-menu-item">Projects</span></div>
+    <div class="top-menu-container" onclick="location.assign('about.html')"><span class="top-menu-item">About Us</span></div>
+    <div class="top-menu-container" onclick="location.assign('other.html')"><span class="top-menu-item">Other Projects</span></div>
+</div>
     <main class="page">
-
-<section class="hero" style="min-height:auto;padding-bottom:25px">
-    <div class="eyebrow">PROJECTS</div>
-    <h1>Projects</h1>
-</section>
-<section class="section">
-    <div class="status">There are no projects (yet)</div>
-    <p>COMING SOON...</p>
-</section>
-
-        <footer class="footer">VoidBit Software · Software development &amp; experimentation</footer>
+        <section class="hero" style="min-height:auto;padding-bottom:25px">
+            <div class="eyebrow">PROJECTS</div>
+            <h1>Projects</h1>
+        </section>
+        <section class="section">
+            <div class="status">There are no projects (yet)</div>
+            <p>COMING SOON...</p>
+        </section>
+        <footer class="footer">VoidBit Software · Indie game development & experimentation</footer>
     </main>
 </body>
 </html>

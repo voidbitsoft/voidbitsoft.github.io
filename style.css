@@ -53,6 +53,7 @@ a {
     text-decoration: none;
 }
 
+<<<<<<< HEAD
 a:focus-visible,
 button:focus-visible {
     outline: 2px solid var(--accent-bright);
@@ -60,6 +61,8 @@ button:focus-visible {
     border-radius: 6px;
 }
 
+=======
+>>>>>>> origin/main
 .top-menu {
     position: fixed;
     z-index: 50;
@@ -196,13 +199,17 @@ h1 {
 
 .glass-card {
     position: relative;
+<<<<<<< HEAD
     display: block;
+=======
+>>>>>>> origin/main
     overflow: hidden;
     padding: 25px;
     border: 1px solid var(--line);
     border-radius: 22px;
     background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
     box-shadow: var(--shadow);
+<<<<<<< HEAD
     transition: transform .28s cubic-bezier(.2,.7,.3,1), border-color .28s ease, background .28s ease;
 }
 
@@ -211,6 +218,8 @@ h1 {
     transform: translateY(-4px);
     border-color: rgba(239,23,52,.35);
     background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.022));
+=======
+>>>>>>> origin/main
 }
 
 .glass-card::after {
@@ -223,6 +232,7 @@ h1 {
     border-radius: 50%;
     background: rgba(184,0,24,.13);
     filter: blur(18px);
+<<<<<<< HEAD
     transition: opacity .28s ease;
 }
 
@@ -246,6 +256,8 @@ h1 {
 .glass-card:focus-visible .card-title::after {
     opacity: 1;
     transform: translateX(0);
+=======
+>>>>>>> origin/main
 }
 
 .card-kicker {
