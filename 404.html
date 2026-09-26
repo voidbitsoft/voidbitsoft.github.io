@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#050506">
+    <title>404 | VoidBit Software</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-wrap {
+            margin-top: 35px;
+            padding: 28px;
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            background: rgba(10,10,13,.62);
+            box-shadow: var(--shadow);
+        }
+        .game-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .game-title {
+            font-size: 15px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: #a9a9b0;
+        }
+        .game-scores {
+            display: flex;
+            gap: 18px;
+            font-size: 14px;
+            color: #c7c7cd;
+        }
+        .game-scores b { color: var(--accent-bright); }
+        #runner-canvas {
+            display: block;
+            width: 100%;
+            height: 220px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0) 40%), #0b0b0e;
+            border: 1px solid var(--line);
+            touch-action: none;
+            cursor: pointer;
+        }
+        .game-hint {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+        }
+        .game-overlay-msg {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+            color: #f5f5f7;
+            background: rgba(5,5,6,.55);
+            border-radius: 18px;
+            pointer-events: none;
+        }
+        .game-overlay-msg span.big {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -.01em;
+        }
+        .game-canvas-holder { position: relative; }
+    </style>
+</head>
+<body>
+    <nav class="top-menu">
+        <a class="top-menu-container" href="/"><img src="voidbit_logo.png" class="top-menu-logo" alt="VoidBit"></a>
+        <a class="top-menu-container" href="/"><span class="top-menu-item">Home</span></a>
+        <a class="top-menu-container" href="/projects"><span class="top-menu-item">Projects</span></a>
+        <a class="top-menu-container" href="/about"><span class="top-menu-item">About Us</span></a>
+        <a class="top-menu-container" href="/other"><span class="top-menu-item">Other projects</span></a>
+    </nav>
+    <main class="page">
+
+<section class="hero" style="min-height:50vh;padding-bottom:20px">
+    <div class="eyebrow">ERROR 404</div>
+    <h1>Page <span>not found</span></h1>
+    <p class="hero-subtitle">The page you're looking for doesn't exist here. While you're here, though — try the game below.</p>
+</section>
+
+<section class="game-wrap">
+    <div class="game-header">
+        <div class="game-title">Void Runner</div>
+        <div class="game-scores">Score: <b id="score-val">0</b> &nbsp;·&nbsp; Best: <b id="best-val">0</b></div>
+    </div>
+    <div class="game-canvas-holder">
+        <canvas id="runner-canvas"></canvas>
+        <div class="game-overlay-msg" id="overlay-msg" style="display:none"></div>
+    </div>
+    <p class="game-hint">Space / Up / Tap to jump. Hold to jump higher.</p>
+</section>
+
+        <footer class="footer">VoidBit Software · Software development &amp; experimentation</footer>
+    </main>
+
+<script>
+(() => {
+    const canvas = document.getElementById('runner-canvas');
+    const ctx = canvas.getContext('2d');
+    const overlay = document.getElementById('overlay-msg');
+    const scoreEl = document.getElementById('score-val');
+    const bestEl = document.getElementById('best-val');
+
+    const ACCENT = '#ef1734';
+    const ACCENT2 = '#b80018';
+    const MUTED = '#3a3a42';
+
+    let W, H, DPR, groundY = 0;
+    function resize() {
+        DPR = Math.min(window.devicePixelRatio || 1, 2);
+        const rect = canvas.getBoundingClientRect();
+        W = rect.width;
+        H = rect.height;
+        canvas.width = W * DPR;
+        canvas.height = H * DPR;
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        groundY = H - 28;
+    }
+
+    const GRAVITY = 0.0022;
+    const JUMP_V = -0.72;
+    const HOLD_GRAVITY_MULT = 0.45;
+
+    let best = 0;
+    try { best = parseInt(localStorage.getItem('voidRunnerBest') || '0', 10) || 0; } catch (e) { best = 0; }
+    bestEl.textContent = best;
+
+    let state = 'idle'; // idle | running | dead
+    let player, obstacles, particles, speed, distance, score, lastTime, spawnTimer, groundOffset;
+
+    function reset() {
+        player = { x: 46, y: 0, w: 26, h: 30, vy: 0, onGround: true, holding: false, squash: 1 };
+        obstacles = [];
+        particles = [];
+        speed = 0.26;
+        distance = 0;
+        score = 0;
+        spawnTimer = 900;
+        groundOffset = 0;
+        scoreEl.textContent = '0';
+    }
+
+    function spawnObstacle() {
+        const canFly = score > 300;
+        const roll = Math.random();
+        if (canFly && roll < 0.3) {
+            obstacles.push({ type: 'flyer', x: W + 20, y: groundY - 66 - Math.random() * 18, w: 24, h: 18 });
+        } else if (roll < 0.55) {
+            obstacles.push({ type: 'block', x: W + 20, w: 22, h: 46 });
+        } else {
+            obstacles.push({ type: 'block', x: W + 20, w: 22, h: 26 + Math.random() * 12 });
+        }
+    }
+
+    function startJump() {
+        if (state === 'idle' || state === 'dead') { start(); return; }
+        if (player.onGround) {
+            player.vy = JUMP_V;
+            player.onGround = false;
+            player.squash = 1;
+            for (let i = 0; i < 6; i++) {
+                particles.push({ x: player.x + player.w / 2, y: groundY, vx: (Math.random() - 0.5) * 0.15, vy: -Math.random() * 0.1, life: 400, max: 400 });
+            }
+        }
+        player.holding = true;
+    }
+    function endJump() { if (player) player.holding = false; }
+
+    function start() {
+        reset();
+        state = 'running';
+        overlay.style.display = 'none';
+        lastTime = performance.now();
+        requestAnimationFrame(loop);
+    }
+
+    function die() {
+        state = 'dead';
+        if (score > best) {
+            best = score;
+            bestEl.textContent = best;
+            try { localStorage.setItem('voidRunnerBest', String(best)); } catch (e) {}
+        }
+        overlay.innerHTML = `<span class="big">Game over — ${score}</span><span>Space / Tap to try again</span>`;
+        overlay.style.display = 'flex';
+    }
+
+    function rectsOverlap(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function loop(now) {
+        if (state !== 'running') return;
+        let dt = now - lastTime;
+        lastTime = now;
+        if (dt > 40) dt = 40;
+
+        distance += speed * dt;
+        speed = Math.min(0.62, 0.26 + distance * 0.000018);
+        score = Math.floor(distance / 6);
+        scoreEl.textContent = score;
+        groundOffset = (groundOffset + speed * dt) % 34;
+
+        const g = GRAVITY * (player.holding && player.vy < 0 ? HOLD_GRAVITY_MULT : 1);
+        player.vy += g * dt;
+        player.y += player.vy * dt;
+        const baseY = groundY - player.h;
+        if (player.y >= baseY) {
+            if (!player.onGround) player.squash = 1.35;
+            player.y = baseY;
+            player.vy = 0;
+            player.onGround = true;
+        }
+        if (player.squash > 1) player.squash = Math.max(1, player.squash - dt * 0.003);
+
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) {
+            spawnObstacle();
+            spawnTimer = Math.max(560, 1150 - distance * 0.03) + Math.random() * 400;
+        }
+
+        const playerBox = { x: player.x + 4, y: player.y + 4, w: player.w - 8, h: player.h - 6 };
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            const o = obstacles[i];
+            o.x -= speed * dt;
+            if (o.x + o.w < -10) { obstacles.splice(i, 1); continue; }
+            const box = o.type === 'flyer'
+                ? { x: o.x, y: o.y, w: o.w, h: o.h }
+                : { x: o.x, y: groundY - o.h, w: o.w, h: o.h };
+            if (rectsOverlap(playerBox, box)) die();
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.life -= dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        draw();
+        if (state === 'running') requestAnimationFrame(loop);
+    }
+
+    function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        ctx.fillStyle = 'rgba(255,255,255,.05)';
+        for (let i = 0; i < 5; i++) {
+            const x = ((i * 137 - groundOffset * 3) % (W + 40)) - 20;
+            ctx.fillRect(x, 18 + (i % 3) * 14, 2, 2);
+        }
+
+        ctx.strokeStyle = MUTED;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, groundY + 1);
+        ctx.lineTo(W, groundY + 1);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255,255,255,.12)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let x = -groundOffset; x < W; x += 34) {
+            ctx.moveTo(x, groundY + 1);
+            ctx.lineTo(x + 16, groundY + 1);
+        }
+        ctx.stroke();
+
+        particles.forEach(p => {
+            ctx.globalAlpha = Math.max(0, p.life / p.max);
+            ctx.fillStyle = ACCENT;
+            ctx.fillRect(p.x, p.y, 3, 3);
+            ctx.globalAlpha = 1;
+        });
+
+        obstacles.forEach(o => {
+            if (o.type === 'flyer') {
+                const grad = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.h);
+                grad.addColorStop(0, ACCENT);
+                grad.addColorStop(1, ACCENT2);
+                ctx.fillStyle = grad;
+                roundRect(o.x, o.y, o.w, o.h, 5);
+                ctx.fill();
+            } else {
+                const grad = ctx.createLinearGradient(o.x, groundY - o.h, o.x, groundY);
+                grad.addColorStop(0, '#e9e9ee');
+                grad.addColorStop(1, '#9a9aa2');
+                ctx.fillStyle = grad;
+                roundRect(o.x, groundY - o.h, o.w, o.h, 4);
+                ctx.fill();
+            }
+        });
+
+        const px = player.x, py = player.y, pw = player.w, ph = player.h;
+        const sx = 1 / Math.sqrt(player.squash);
+        const sy = player.squash;
+        ctx.save();
+        ctx.translate(px + pw / 2, py + ph);
+        ctx.scale(sx, sy);
+        const grad = ctx.createLinearGradient(0, -ph, 0, 0);
+        grad.addColorStop(0, ACCENT);
+        grad.addColorStop(1, ACCENT2);
+        ctx.fillStyle = grad;
+        roundRect(-pw / 2, -ph, pw, ph, 7);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.85)';
+        ctx.fillRect(pw / 2 - 10, -ph + 8, 4, 4);
+        ctx.restore();
+    }
+
+    function drawIdle() {
+        resize();
+        ctx.clearRect(0, 0, W, H);
+        ctx.strokeStyle = MUTED;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, groundY + 1);
+        ctx.lineTo(W, groundY + 1);
+        ctx.stroke();
+        ctx.fillStyle = ACCENT;
+        roundRect(46, groundY - 30, 26, 30, 7);
+        ctx.fill();
+        overlay.innerHTML = `<span class="big">Void Runner</span><span>Space / Tap to start</span>`;
+        overlay.style.display = 'flex';
+    }
+
+    window.addEventListener('resize', () => {
+        if (state !== 'running') drawIdle();
+        else resize();
+    });
+
+    window.addEventListener('keydown', e => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            e.preventDefault();
+            startJump();
+        }
+    });
+    window.addEventListener('keyup', e => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') endJump();
+    });
+    canvas.addEventListener('pointerdown', e => { e.preventDefault(); startJump(); });
+    canvas.addEventListener('pointerup', endJump);
+    canvas.addEventListener('pointerleave', endJump);
+
+    resize();
+    drawIdle();
+})();
+</script>
+</body>
+</html>
