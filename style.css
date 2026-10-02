@@ -189,7 +189,7 @@ h1 {
 
 .hero-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 14px;
     margin-top: 48px;
 }
@@ -306,6 +306,84 @@ li::marker {
 .section a:not(.top-menu-container):hover {
     color: #fff;
     text-decoration-color: #fff;
+}
+
+.project-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 6px;
+}
+
+.project-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+    transition: transform .25s cubic-bezier(.2,.7,.3,1), border-color .25s ease;
+}
+
+.project-card:hover,
+.project-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: rgba(239,23,52,.35);
+}
+
+.project-card img {
+    height: 36px;
+    width: auto;
+    flex-shrink: 0;
+}
+
+.project-card-body { flex: 1; min-width: 0; }
+
+.project-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.project-card-title::after {
+    content: "→";
+    color: var(--accent-bright);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: .22s ease;
+}
+
+.project-card:hover .project-card-title::after,
+.project-card:focus-visible .project-card-title::after {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.project-card-desc {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.project-banner {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 20px;
+    margin: 24px 0;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: #000;
+}
+
+.project-banner img {
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
 
 .status {
